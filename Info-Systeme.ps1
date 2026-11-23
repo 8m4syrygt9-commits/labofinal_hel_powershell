@@ -1,5 +1,5 @@
 # Fiche d'info système - version 2
-# Ajout : alerte si un disque est presque plein
+# Ajout : alerte si un disque est presque plein, puis uptime et adresse IP
 param(
     [int]$SeuilDisque = 90   # pourcentage d'occupation qui déclenche l'alerte
 )
@@ -10,6 +10,16 @@ Write-Host "===== FICHE D'INFO SYSTEME =====" -ForegroundColor Cyan
 $info = Get-ComputerInfo
 Write-Host "Nom du PC : $($info.CsName)"
 Write-Host "Système   : $($info.OsName)"
+
+# Durée depuis le dernier démarrage
+$duree = (Get-Date) - $info.OsLastBootUpTime
+Write-Host "Allumé depuis : $($duree.Days) j $($duree.Hours) h $($duree.Minutes) min"
+
+# Adresse(s) IP (on ignore la boucle locale 127.x.x.x)
+$ips = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" }
+foreach ($ip in $ips) {
+    Write-Host "IP ($($ip.InterfaceAlias)) : $($ip.IPAddress)"
+}
 
 # 2) Espace disque (en Go) + alerte
 Write-Host ""
