@@ -1,5 +1,8 @@
-# Fiche d'info système - version 1
-# Affiche : nom du PC, espace disque, mémoire, processus les plus gourmands
+# Fiche d'info système - version 2
+# Ajout : alerte si un disque est presque plein
+param(
+    [int]$SeuilDisque = 90   # pourcentage d'occupation qui déclenche l'alerte
+)
 
 Write-Host "===== FICHE D'INFO SYSTEME =====" -ForegroundColor Cyan
 
@@ -8,14 +11,21 @@ $info = Get-ComputerInfo
 Write-Host "Nom du PC : $($info.CsName)"
 Write-Host "Système   : $($info.OsName)"
 
-# 2) Espace disque (en Go)
+# 2) Espace disque (en Go) + alerte
 Write-Host ""
 Write-Host "--- Disques ---" -ForegroundColor Yellow
 $disques = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -ne $null }
 foreach ($d in $disques) {
     $utilise = [math]::Round($d.Used / 1GB, 1)
     $libre   = [math]::Round($d.Free / 1GB, 1)
-    Write-Host "$($d.Name): utilisé $utilise Go, libre $libre Go"
+    $taille  = $d.Used + $d.Free
+    $pourcent = [math]::Round(($d.Used / $taille) * 100, 0)
+
+    if ($pourcent -ge $SeuilDisque) {
+        Write-Host "$($d.Name): utilisé $utilise Go, libre $libre Go ($pourcent %) *** ALERTE : disque presque plein ! ***" -ForegroundColor Red
+    } else {
+        Write-Host "$($d.Name): utilisé $utilise Go, libre $libre Go ($pourcent %)" -ForegroundColor Green
+    }
 }
 
 # 3) Mémoire (les valeurs sont en Ko)
