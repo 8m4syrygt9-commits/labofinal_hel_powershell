@@ -1,8 +1,15 @@
-# Fiche d'info système - version 2
-# Ajout : alerte si un disque est presque plein, puis uptime et adresse IP
+# Fiche d'info système - version finale
+# Ajout : alerte si un disque est presque plein, uptime, adresse IP et export dans un fichier
 param(
-    [int]$SeuilDisque = 90   # pourcentage d'occupation qui déclenche l'alerte
+    [int]$SeuilDisque = 90,  # pourcentage d'occupation qui déclenche l'alerte
+    [switch]$Exporter        # si présent : enregistre la fiche dans un fichier texte
 )
+
+# Si -Exporter : tout ce qui s'affiche est aussi copié dans un fichier daté
+if ($Exporter) {
+    $fichier = Join-Path $PSScriptRoot ("fiche_" + (Get-Date -Format "yyyy-MM-dd_HH-mm") + ".txt")
+    Start-Transcript -Path $fichier | Out-Null
+}
 
 Write-Host "===== FICHE D'INFO SYSTEME =====" -ForegroundColor Cyan
 
@@ -52,3 +59,9 @@ Get-Process |
     Sort-Object WorkingSet -Descending |
     Select-Object -First 5 Name, @{Name="Mémoire (Mo)"; Expression={[math]::Round($_.WorkingSet / 1MB, 1)}} |
     Format-Table -AutoSize
+
+if ($Exporter) {
+    Stop-Transcript | Out-Null
+    Write-Host ""
+    Write-Host "Fiche enregistrée dans : $fichier" -ForegroundColor Cyan
+}
